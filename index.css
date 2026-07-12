@@ -42,20 +42,20 @@ body{
     position:fixed;inset:0;z-index:1;pointer-events:none;
 }
 
-/* Phone mirror — off-screen capture */
-#phone-mirror{
-    position:fixed;left:0;top:0;width:390px;height:844px;
-    opacity:0;pointer-events:none;z-index:-1;
-    font-family:var(--font-body);background:var(--bg);color:var(--text);
+/* Live sajt na 3D ekranu telefona */
+.phone-screen-live{
+    width:300px;height:640px;overflow:hidden;border-radius:28px;
+    background:var(--bg);pointer-events:none;
+    box-shadow:inset 0 0 0 1px rgba(255,255,255,0.08);
 }
-.phone-mirror-viewport{width:390px;height:844px;overflow:hidden;position:relative}
-#phone-mirror-content{width:390px;transform-origin:top left}
-#phone-mirror-content .section{min-height:auto;padding:32px 20px}
-#phone-mirror-content .hero-title{font-size:1.6rem}
-#phone-mirror-content .display-title{font-size:1.3rem}
-#phone-mirror-content .service-img{height:80px}
-#phone-mirror-content .services-grid{grid-template-columns:1fr 1fr;gap:10px}
-#phone-mirror-content .nav,#phone-mirror-content .scroll-indicator,#phone-mirror-content #canvas-3d{display:none!important}
+.phone-screen-inner{width:300px}
+.phone-screen-inner .section{min-height:auto;padding:28px 16px}
+.phone-screen-inner .hero-title{font-size:1.4rem}
+.phone-screen-inner .display-title{font-size:1.15rem}
+.phone-screen-inner .service-img{height:70px}
+.phone-screen-inner .services-grid{grid-template-columns:1fr 1fr;gap:8px}
+.phone-screen-inner .glass-panel{padding:16px!important;border-radius:14px!important}
+.phone-screen-inner .scroll-indicator{display:none}
 
 /* Liquid glass paneli */
 .glass-panel{

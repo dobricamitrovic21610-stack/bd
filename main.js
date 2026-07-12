@@ -1,5 +1,6 @@
 import * as THREE from 'three';
 import { RoundedBoxGeometry } from 'three/addons/geometries/RoundedBoxGeometry.js';
+import { CSS3DRenderer, CSS3DObject } from 'three/addons/renderers/CSS3DRenderer.js';
 
 gsap.registerPlugin(ScrollTrigger, ScrollToPlugin);
 
@@ -25,7 +26,12 @@ renderer.setSize(innerWidth, innerHeight);
 renderer.setPixelRatio(Math.min(devicePixelRatio, isMobile ? 1 : 1.3));
 renderer.setClearColor(0x000000, 0);
 renderer.toneMapping = THREE.ACESFilmicToneMapping;
-renderer.toneMappingExposure = 1.2;
+renderer.toneMappingExposure = 1.35;
+
+const cssRenderer = new CSS3DRenderer();
+cssRenderer.setSize(innerWidth, innerHeight);
+cssRenderer.domElement.style.cssText = 'position:fixed;inset:0;pointer-events:none;z-index:1';
+document.body.appendChild(cssRenderer.domElement);
 
 scene.add(new THREE.HemisphereLight(0x99aaff, 0x0a0c18, 0.55));
 scene.add(new THREE.AmbientLight(0x8899cc, 0.45));
@@ -91,14 +97,9 @@ const particles = new THREE.Points(
 scene.add(particles);
 
 // Telefoni — realističan model
-const bodyMat = new THREE.MeshStandardMaterial({ color: 0x1c1f28, metalness: 0.92, roughness: 0.1 });
-const btnMat = new THREE.MeshStandardMaterial({ color: 0x252830, metalness: 0.8, roughness: 0.2 });
-const screenCanvas = document.createElement('canvas');
-screenCanvas.width = 512;
-screenCanvas.height = 1024;
-const screenTex = new THREE.CanvasTexture(screenCanvas);
-screenTex.colorSpace = THREE.SRGBColorSpace;
-screenTex.minFilter = THREE.LinearFilter;
+const bodyMat = new THREE.MeshStandardMaterial({ color: 0x2e323c, metalness: 0.93, roughness: 0.08 });
+const btnMat = new THREE.MeshStandardMaterial({ color: 0x3a3f4a, metalness: 0.85, roughness: 0.15 });
+const SW = 300, SH = 640;
 
 function makePhone(scale, detail) {
     const g = new THREE.Group();
@@ -143,11 +144,17 @@ function makePhone(scale, detail) {
         bezel.position.z = 0.004;
         g.add(bezel);
 
-        // Ekran sa live sajtom
-        const screenMat = new THREE.MeshBasicMaterial({ map: screenTex });
-        const screen = new THREE.Mesh(new RoundedBoxGeometry(W - 0.075, H - 0.115, 0.004, 3, 0.012), screenMat);
-        screen.position.z = D / 2 - 0.003;
-        g.add(screen);
+        // Ekran — CSS3D live sajt
+        const screenW = W - 0.075, screenH = H - 0.115;
+        const screenPlane = new THREE.Mesh(
+            new THREE.PlaneGeometry(screenW, screenH),
+            new THREE.MeshBasicMaterial({ color: 0x000000, transparent: true, opacity: 0 })
+        );
+        screenPlane.position.z = D / 2 - 0.001;
+        g.add(screenPlane);
+        g.userData.screenPlane = screenPlane;
+        g.userData.screenW = screenW;
+        g.userData.screenH = screenH;
 
         // Dynamic Island
         const island = new THREE.Mesh(
@@ -168,7 +175,7 @@ function makePhone(scale, detail) {
         glass.position.z = D / 2 + 0.004;
         g.add(glass);
 
-        g.userData.screen = screen;
+        g.userData.screen = screenPlane;
     } else {
         const sm = new THREE.MeshStandardMaterial({ color: 0x101828, emissive: 0x334466, emissiveIntensity: 0.8, metalness: 0.1, roughness: 0.15 });
         const scr = new THREE.Mesh(new RoundedBoxGeometry(W - 0.08, H - 0.1, 0.005, seg, 0.012), sm);
@@ -184,6 +191,33 @@ scene.add(world);
 
 const mainPhone = makePhone(1, true);
 world.add(mainPhone);
+
+// Live HTML ekran na telefonu
+const screenEl = document.createElement('div');
+screenEl.className = 'phone-screen-live';
+const screenInner = document.createElement('div');
+screenInner.className = 'phone-screen-inner';
+screenEl.appendChild(screenInner);
+
+function buildPhoneScreen() {
+    const src = document.querySelector('.scroll-container');
+    if (!src) return;
+    const clone = src.cloneNode(true);
+    clone.querySelectorAll('[id]').forEach((el) => el.removeAttribute('id'));
+    clone.querySelectorAll('iframe').forEach((f) => f.remove());
+    clone.style.width = `${SW}px`;
+    clone.querySelectorAll('.section').forEach((s) => { s.style.minHeight = 'auto'; });
+    screenInner.innerHTML = '';
+    screenInner.appendChild(clone);
+}
+
+buildPhoneScreen();
+
+const cssScreen = new CSS3DObject(screenEl);
+const screenScale = (mainPhone.userData.screenW || 0.665) / SW;
+cssScreen.scale.set(screenScale, screenScale, 1);
+cssScreen.position.z = 0.043;
+mainPhone.add(cssScreen);
 
 const sats = [];
 [0xcc5566, 0x55aa88, 0x7788dd].forEach((c, i) => {
@@ -269,82 +303,25 @@ function animate() {
     });
 
     particles.rotation.y = t * 0.02;
+
+    const sy = lenis?.scroll ?? window.scrollY;
+    screenInner.style.transform = `translateY(${-sy * 0.48}px)`;
+
     renderer.render(scene, camera);
+    cssRenderer.render(scene, camera);
 }
 animate();
 
-// ─── Phone screen — live sajt na ekranu ─────────────────────────────
-const mirrorContent = document.getElementById('phone-mirror-content');
-const mirrorViewport = document.querySelector('.phone-mirror-viewport');
-let screenCapturePending = false;
-let lastCaptureY = -1;
-
-function setupPhoneMirror() {
-    const src = document.querySelector('.scroll-container');
-    if (!src || !mirrorContent) return;
-    const clone = src.cloneNode(true);
-    clone.style.width = '390px';
-    clone.querySelectorAll('[id]').forEach((el) => el.removeAttribute('id'));
-    clone.querySelectorAll('iframe').forEach((f) => f.remove());
-    clone.querySelectorAll('.glass-panel').forEach((p) => {
-        p.style.padding = '20px';
-        p.style.borderRadius = '14px';
-    });
-    mirrorContent.innerHTML = '';
-    mirrorContent.appendChild(clone);
-}
-
-async function capturePhoneScreen() {
-    if (screenCapturePending || typeof html2canvas === 'undefined') return;
-    const y = Math.round(lenis?.scroll ?? window.scrollY);
-    if (Math.abs(y - lastCaptureY) < 20 && lastCaptureY >= 0) return;
-
-    screenCapturePending = true;
-    const target = document.querySelector('.scroll-container');
-
-    try {
-        const shot = await html2canvas(target, {
-            scale: 0.55,
-            y,
-            height: Math.min(1200, target.scrollHeight - y),
-            width: target.offsetWidth,
-            scrollY: -y,
-            backgroundColor: '#0b0d18',
-            logging: false,
-            useCORS: true,
-            allowTaint: true,
-        });
-        const ctx = screenCanvas.getContext('2d');
-        ctx.fillStyle = '#0b0d18';
-        ctx.fillRect(0, 0, 512, 1024);
-        ctx.drawImage(shot, 0, 0, 512, 1024);
-        screenTex.needsUpdate = true;
-        lastCaptureY = y;
-    } catch (e) {
-        if (mirrorViewport) {
-            mirrorContent.style.transform = `translateY(${-y * 0.42}px)`;
-            const shot = await html2canvas(mirrorViewport, { scale: 1.2, backgroundColor: '#0b0d18', logging: false });
-            const ctx = screenCanvas.getContext('2d');
-            ctx.drawImage(shot, 0, 0, 512, 1024);
-            screenTex.needsUpdate = true;
-            lastCaptureY = y;
-        }
-    }
-    screenCapturePending = false;
-}
-
-setupPhoneMirror();
-window.addEventListener('load', () => {
-    setTimeout(capturePhoneScreen, 400);
-    setTimeout(capturePhoneScreen, 1500);
+lenis.on('scroll', () => {
+    const sy = lenis.scroll;
+    screenInner.style.transform = `translateY(${-sy * 0.48}px)`;
 });
-lenis.on('scroll', () => { requestAnimationFrame(capturePhoneScreen); });
-addEventListener('resize', () => { lastCaptureY = -1; capturePhoneScreen(); }, { passive: true });
 
 addEventListener('resize', () => {
     camera.aspect = innerWidth / innerHeight;
     camera.updateProjectionMatrix();
     renderer.setSize(innerWidth, innerHeight);
+    cssRenderer.setSize(innerWidth, innerHeight);
 }, { passive: true });
 
 // ─── Split text — po rečima ─────────────────────────────────────────
