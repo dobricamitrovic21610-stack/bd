@@ -1,0 +1,180 @@
+<!DOCTYPE html>
+<html lang="sr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>B & D MOBILE | Servis i Prodaja</title>
+    <link rel="icon" type="image/png" href="logo.png">
+    <link rel="stylesheet" href="index.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Syne:wght@500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+</head>
+<body>
+
+    <div class="bg-mesh" aria-hidden="true"></div>
+    <div class="scroll-progress"><div class="scroll-progress-bar"></div></div>
+
+    <canvas id="canvas-3d" aria-hidden="true"></canvas>
+
+    <!-- Mirror za 3D ekran telefona -->
+    <div id="phone-mirror" aria-hidden="true">
+        <div class="phone-mirror-viewport">
+            <div id="phone-mirror-content"></div>
+        </div>
+    </div>
+
+    <nav class="nav" id="nav">
+        <div class="nav-pill">
+            <a href="#hero" class="nav-brand">
+                <img src="logo.jpg" alt="B&D" class="nav-logo">
+                <span>B & D</span>
+            </a>
+            <ul class="nav-menu">
+                <li><a href="#hero" class="nav-link">Početna</a></li>
+                <li><a href="#about" class="nav-link">O nama</a></li>
+                <li><a href="#services" class="nav-link">Usluge</a></li>
+                <li><a href="#contact" class="nav-link">Kontakt</a></li>
+            </ul>
+            <button class="nav-toggle" id="nav-toggle" aria-label="Meni"><span></span><span></span></button>
+        </div>
+        <div class="nav-mobile" id="nav-mobile">
+            <a href="#hero" class="nav-mobile-link">Početna</a>
+            <a href="#about" class="nav-mobile-link">O nama</a>
+            <a href="#services" class="nav-mobile-link">Usluge</a>
+            <a href="#contact" class="nav-mobile-link">Kontakt</a>
+        </div>
+    </nav>
+
+    <main class="scroll-container">
+
+        <section class="section section-hero" id="hero">
+            <div class="section-inner hero-grid glass-panel" data-glass>
+                <div class="hero-content">
+                    <p class="label">Loznica · Servis & Prodaja</p>
+                    <h1 class="hero-title">
+                        <span class="line" data-split>Vaš telefon</span>
+                        <span class="line accent" data-split>u sigurnim rukama.</span>
+                    </h1>
+                    <p class="hero-desc">Profesionalni servis mobilnih telefona, prodaja opreme i polovnih uređaja.</p>
+                    <div class="hero-actions">
+                        <a href="#services" class="btn btn-primary">Pogledaj usluge</a>
+                        <a href="#contact" class="btn btn-ghost">Kontakt</a>
+                    </div>
+                </div>
+                <div class="hero-visual" aria-hidden="true">
+                    <div class="hero-ring"></div>
+                </div>
+            </div>
+            <div class="scroll-indicator">
+                <span>Scroll</span>
+                <div class="scroll-line"></div>
+            </div>
+        </section>
+
+        <section class="section section-about" id="about">
+            <div class="section-inner glass-panel" data-glass>
+                <div class="section-head">
+                    <span class="section-num">01</span>
+                    <span class="label">O nama</span>
+                </div>
+                <h2 class="display-title">Tehnologija kojoj<br><em>možete verovati</em></h2>
+                <p class="body-text">B & D Mobile je vaš pouzdani partner za sve što se tiče mobilnih uređaja — od zamene ekrana do prodaje smart satova.</p>
+                <div class="stats-row">
+                    <div class="stat"><span class="stat-num" data-count="6">0</span><span class="stat-label">Usluga</span></div>
+                    <div class="stat"><span class="stat-num" data-count="2">0</span><span class="stat-label">Telefona</span></div>
+                    <div class="stat"><span class="stat-num" data-count="100">0</span><span class="stat-label">% Posvećenost</span></div>
+                </div>
+            </div>
+        </section>
+
+        <section class="section section-services" id="services">
+            <div class="section-inner wide glass-panel" data-glass>
+                <div class="section-head">
+                    <span class="section-num">02</span>
+                    <span class="label">Usluge</span>
+                </div>
+                <h2 class="display-title">Sve za vaš<br><em>mobilni uređaj</em></h2>
+                <div class="services-grid">
+                    <article class="service-card">
+                        <div class="service-img"><img src="servis.jpg" alt="Servis ekrana" loading="lazy"></div>
+                        <div class="service-body"><span class="service-num">01</span><h3>Servis ekrana</h3><p>Brza zamena oštećenih ekrana.</p></div>
+                    </article>
+                    <article class="service-card">
+                        <div class="service-img"><img src="oprema.jpg" alt="Oprema" loading="lazy"></div>
+                        <div class="service-body"><span class="service-num">02</span><h3>Prateća oprema</h3><p>Punjači, kablovi, slušalice.</p></div>
+                    </article>
+                    <article class="service-card">
+                        <div class="service-img"><img src="maskice.jpg" alt="Maskice" loading="lazy"></div>
+                        <div class="service-body"><span class="service-num">03</span><h3>Maskice</h3><p>Zaštitne maske za sve modele.</p></div>
+                    </article>
+                    <article class="service-card">
+                        <div class="service-img"><img src="baterije.jpg" alt="Baterije" loading="lazy"></div>
+                        <div class="service-body"><span class="service-num">04</span><h3>Zamena baterija</h3><p>Puna autonomija uređaja.</p></div>
+                    </article>
+                    <article class="service-card">
+                        <div class="service-img"><img src="prodaja.jpg" alt="Prodaja" loading="lazy"></div>
+                        <div class="service-body"><span class="service-num">05</span><h3>Prodaja telefona</h3><p>Novi i polovni telefoni.</p></div>
+                    </article>
+                    <article class="service-card">
+                        <div class="service-img"><img src="satovi.jpg" alt="Satovi" loading="lazy"></div>
+                        <div class="service-body"><span class="service-num">06</span><h3>Smart satovi</h3><p>Pametni satovi i oprema.</p></div>
+                    </article>
+                </div>
+            </div>
+        </section>
+
+        <section class="section section-contact" id="contact">
+            <div class="section-inner glass-panel" data-glass>
+                <div class="section-head">
+                    <span class="section-num">03</span>
+                    <span class="label">Kontakt</span>
+                </div>
+                <h2 class="display-title">Posetite nas<br><em>u Loznici</em></h2>
+                <div class="contact-grid">
+                    <a href="https://maps.app.goo.gl/Ezyud4bgmUxcBked8" target="_blank" rel="noopener" class="contact-card">
+                        <i class="fas fa-map-marker-alt"></i>
+                        <div><span class="contact-label">Lokacija</span><span class="contact-value">Žikice Jovanovića 2</span></div>
+                    </a>
+                    <div class="contact-card">
+                        <i class="fas fa-phone"></i>
+                        <div><span class="contact-label">Telefon</span>
+                            <a href="tel:015873210" class="contact-value">015 873 210</a>
+                            <a href="tel:0631756615" class="contact-value">063 175 6615</a>
+                        </div>
+                    </div>
+                    <a href="https://www.instagram.com/bdmobill?utm_source=ig_web_button_share_sheet&igsh=ZDNlZDc0MzIxNw==" target="_blank" rel="noopener" class="contact-card">
+                        <i class="fab fa-instagram"></i>
+                        <div><span class="contact-label">Instagram</span><span class="contact-value">@bdmobil</span></div>
+                    </a>
+                    <a href="https://www.facebook.com/bdmobill/" target="_blank" rel="noopener" class="contact-card">
+                        <i class="fab fa-facebook"></i>
+                        <div><span class="contact-label">Facebook</span><span class="contact-value">B & D Mobile</span></div>
+                    </a>
+                </div>
+                <div class="map-wrap">
+                    <iframe src="https://maps.google.com/maps?q=44.530311,19.223515&hl=sr&z=17&output=embed" width="100%" height="300" style="border:0;" loading="lazy" title="Lokacija"></iframe>
+                </div>
+                <footer class="footer">
+                    <img src="logo.jpg" alt="Logo" class="footer-logo">
+                    <p>&copy; 2026 B & D Mobile</p>
+                </footer>
+            </div>
+        </section>
+
+    </main>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/gsap.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/ScrollTrigger.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/ScrollToPlugin.min.js"></script>
+    <script src="https://unpkg.com/lenis@1.1.13/dist/lenis.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+    <script type="importmap">
+    { "imports": {
+        "three": "https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js",
+        "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.160.0/examples/jsm/"
+    }}</script>
+    <script type="module" src="main.js"></script>
+</body>
+</html>
