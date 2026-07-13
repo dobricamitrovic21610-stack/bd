@@ -35,9 +35,12 @@ scene.add(key);
 const rim = new THREE.DirectionalLight(0x7799ff, 0.7);
 rim.position.set(-5, 2, -3);
 scene.add(rim);
-const phoneLight = new THREE.PointLight(0x6688ff, 1.2, 14);
+const phoneLight = new THREE.PointLight(0x99aaff, 2, 14);
 phoneLight.position.set(2, 1, 3);
 scene.add(phoneLight);
+const frontLight = new THREE.DirectionalLight(0xffffff, 0.9);
+frontLight.position.set(0, 2, 8);
+scene.add(frontLight);
 
 // Aurora + Opus pozadina
 const auroraMat = new THREE.ShaderMaterial({
@@ -226,23 +229,54 @@ function buildCaptureMirror() {
 }
 
 async function updateScreenTexture() {
-    if (capturing || !captureViewport || typeof html2canvas === 'undefined') return;
+    if (capturing || !captureViewport) return;
     const sy = Math.round(lenis.scroll);
     if (Math.abs(sy - lastCapY) < 15 && lastCapY >= 0) return;
 
     capturing = true;
     captureContent.style.transform = `translateY(${-sy * 0.46}px)`;
 
-    try {
-        const shot = await html2canvas(captureViewport, {
-            width: 260, height: 562, scale: lowPower ? 1 : 1.5,
-            backgroundColor: '#0b0d18', logging: false, useCORS: true,
-        });
-        const ctx = screenCanvas.getContext('2d');
-        ctx.drawImage(shot, 0, 0, screenCanvas.width, screenCanvas.height);
-        screenTex.needsUpdate = true;
-        lastCapY = sy;
-    } catch (_) { /* skip */ }
+    const ctx = screenCanvas.getContext('2d');
+    const w = screenCanvas.width, h = screenCanvas.height;
+
+    if (typeof html2canvas !== 'undefined') {
+        try {
+            const shot = await html2canvas(captureViewport, {
+                width: 260, height: 562, scale: lowPower ? 1 : 1.5,
+                backgroundColor: '#0b0d18', logging: false, useCORS: true,
+            });
+            ctx.drawImage(shot, 0, 0, w, h);
+            screenTex.needsUpdate = true;
+            lastCapY = sy;
+            capturing = false;
+            return;
+        } catch (_) { /* fallback */ }
+    }
+
+    // Fallback — crta mini sajt na canvas
+    ctx.fillStyle = '#0b0d18';
+    ctx.fillRect(0, 0, w, h);
+    const g = ctx.createRadialGradient(w * 0.65, h * 0.12, 0, w * 0.65, h * 0.12, w);
+    g.addColorStop(0, 'rgba(110,140,255,0.3)');
+    g.addColorStop(1, 'transparent');
+    ctx.fillStyle = g;
+    ctx.fillRect(0, 0, w, h);
+    const off = sy * 0.55;
+    ctx.fillStyle = 'rgba(255,255,255,0.1)';
+    ctx.beginPath();
+    ctx.roundRect(w / 2 - 90, 36 - off, 180, 26, 13);
+    ctx.fill();
+    ctx.fillStyle = '#e8eeff';
+    ctx.font = 'bold 34px Syne, sans-serif';
+    ctx.fillText('Vaš telefon', 36, 120 - off);
+    ctx.fillStyle = '#c4a8ff';
+    ctx.font = 'bold 26px Syne, sans-serif';
+    ctx.fillText('u sigurnim rukama.', 36, 162 - off);
+    ctx.fillStyle = '#8b8fa8';
+    ctx.font = '15px Inter, sans-serif';
+    ctx.fillText('B & D Mobile — Loznica', 36, 210 - off);
+    screenTex.needsUpdate = true;
+    lastCapY = sy;
     capturing = false;
 }
 
@@ -252,7 +286,8 @@ function scheduleCapture() {
 }
 
 buildCaptureMirror();
-window.addEventListener('load', () => setTimeout(updateScreenTexture, 500));
+updateScreenTexture();
+window.addEventListener('load', () => setTimeout(updateScreenTexture, 400));
 lenis.on('scroll', scheduleCapture);
 
 // 1 satelit umesto 3
