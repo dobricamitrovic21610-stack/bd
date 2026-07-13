@@ -223,7 +223,8 @@ function buildCaptureMirror() {
     clone.querySelectorAll('[id]').forEach((el) => el.removeAttribute('id'));
     clone.querySelectorAll('iframe').forEach((f) => f.remove());
     clone.style.width = '260px';
-    clone.querySelectorAll('.section').forEach((s) => { s.style.minHeight = 'auto'; });
+    clone.querySelectorAll('a').forEach((a) => { a.setAttribute('tabindex', '-1'); });
+    captureContent.setAttribute('aria-hidden', 'true');
     captureContent.innerHTML = '';
     captureContent.appendChild(clone);
 }

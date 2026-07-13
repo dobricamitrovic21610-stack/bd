@@ -44,10 +44,11 @@ body{
 
 /* Skriveni capture — nikad se ne vidi na stranici */
 #phone-capture{
-    position:fixed;left:0;top:0;width:260px;height:562px;
-    overflow:hidden;opacity:0.01;pointer-events:none;z-index:-1;
+    position:fixed;left:0;top:0;width:1px;height:1px;
+    overflow:hidden;clip:rect(0,0,0,0);clip-path:inset(50%);
+    opacity:0;pointer-events:none;z-index:-9999;contain:strict;
 }
-#phone-capture-viewport{width:260px;height:562px;overflow:hidden;background:var(--bg)}
+#phone-capture-viewport{width:260px;height:562px;overflow:hidden;background:var(--bg);position:absolute;left:0;top:0}
 #phone-capture-content{width:260px;transform-origin:top left}
 #phone-capture-content .section{min-height:auto;padding:20px 14px}
 #phone-capture-content .hero-title{font-size:1.2rem}
