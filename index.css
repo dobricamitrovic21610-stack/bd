@@ -1,20 +1,20 @@
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
 
 :root{
-    --bg:#0b0d18;
-    --surface:rgba(255,255,255,0.04);
-    --border:rgba(255,255,255,0.1);
-    --text:#f2f0eb;
-    --muted:#8b8fa8;
+    --bg:#0a0c16;
+    --surface:rgba(255,255,255,0.05);
+    --border:rgba(255,255,255,0.12);
+    --text:#f4f2ed;
+    --muted:#9aa0b8;
     --accent:#6e8cff;
     --accent2:#a78bfa;
     --warm:#e8a87c;
     --nav-h:72px;
     --font-display:'Syne',sans-serif;
     --font-body:'Inter',sans-serif;
-    --glass-bg:rgba(255,255,255,0.05);
-    --glass-border:rgba(255,255,255,0.14);
-    --glass-blur:18px;
+    --glass-bg:rgba(12,14,28,0.42);
+    --glass-border:rgba(255,255,255,0.16);
+    --glass-blur:22px;
 }
 
 html.lenis,html.lenis body{height:auto}
@@ -42,28 +42,33 @@ body{
     position:fixed;inset:0;z-index:1;pointer-events:none;
 }
 
-/* Liquid glass paneli */
+/* Glassmorphism — 3D scena se vidi iza, tekst ostaje čitljiv */
 .glass-panel{
     position:relative;
     background:var(--glass-bg);
-    backdrop-filter:blur(var(--glass-blur)) saturate(150%);
-    -webkit-backdrop-filter:blur(var(--glass-blur)) saturate(150%);
+    backdrop-filter:blur(var(--glass-blur)) saturate(160%);
+    -webkit-backdrop-filter:blur(var(--glass-blur)) saturate(160%);
     border:1px solid var(--glass-border);
     border-radius:28px;
     padding:clamp(32px,5vw,56px);
-    box-shadow:0 16px 50px rgba(0,0,0,0.22),inset 0 1px 0 rgba(255,255,255,0.1);
+    box-shadow:
+        0 20px 60px rgba(0,0,0,0.28),
+        inset 0 1px 0 rgba(255,255,255,0.14);
     will-change:transform,opacity;
 }
 .glass-panel::before{
     content:'';position:absolute;inset:0;border-radius:inherit;pointer-events:none;
-    background:linear-gradient(135deg,rgba(255,255,255,0.1) 0%,transparent 40%,rgba(110,140,255,0.06) 100%);
+    background:linear-gradient(135deg,rgba(255,255,255,0.12) 0%,transparent 42%,rgba(110,140,255,0.07) 100%);
 }
-.section-hero .glass-panel{background:transparent;border:none;box-shadow:none;backdrop-filter:none;-webkit-backdrop-filter:none;padding:0;border-radius:0}
+.section-hero .glass-panel{
+    background:transparent;border:none;box-shadow:none;
+    backdrop-filter:none;-webkit-backdrop-filter:none;padding:0;border-radius:0;
+}
 .section-hero .glass-panel::before{display:none}
 .section-about .glass-panel,
 .section-services .glass-panel,
 .section-contact .glass-panel{
-    background:rgba(255,255,255,0.045);
+    background:rgba(10,12,24,0.48);
 }
 
 .scroll-progress{position:fixed;top:0;left:0;width:100%;height:2px;z-index:2000;background:rgba(255,255,255,0.06)}
@@ -121,9 +126,11 @@ body{
 .btn-primary:hover{transform:translateY(-2px);box-shadow:0 12px 40px rgba(255,255,255,0.15)}
 .btn-ghost{border:1px solid var(--border);color:var(--text)}
 .btn-ghost:hover{border-color:var(--accent);color:var(--accent)}
-.hero-visual{position:relative;height:400px}
-.hero-ring{position:absolute;inset:0;border:1px solid rgba(110,140,255,0.15);border-radius:50%;animation:ringPulse 4s ease-in-out infinite}
-.hero-ring::before{content:'';position:absolute;inset:20%;border:1px solid rgba(167,139,250,0.1);border-radius:50%}
+.hero-visual{position:relative;height:400px;pointer-events:none;opacity:.35}
+.hero-ring{position:absolute;inset:10%;border:1px solid rgba(110,140,255,0.2);border-radius:50%;animation:ringPulse 5s ease-in-out infinite}
+.hero-ring::before{content:'';position:absolute;inset:18%;border:1px solid rgba(167,139,250,0.15);border-radius:50%}
+.hero-content{position:relative;z-index:2;text-shadow:0 2px 24px rgba(0,0,0,0.35)}
+.display-title,.body-text,.stat-num,.service-body h3{text-shadow:0 1px 18px rgba(0,0,0,0.25)}
 @keyframes ringPulse{0%,100%{transform:scale(1);opacity:.6}50%{transform:scale(1.03);opacity:1}}
 
 .scroll-indicator{position:absolute;bottom:40px;left:48px;display:flex;flex-direction:column;align-items:center;gap:8px;font-size:.7rem;letter-spacing:2px;text-transform:uppercase;color:var(--muted)}
