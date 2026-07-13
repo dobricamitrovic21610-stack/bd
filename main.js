@@ -1,186 +1,302 @@
 import * as THREE from 'three';
+import { RoundedBoxGeometry } from 'three/addons/geometries/RoundedBoxGeometry.js';
+import { CSS3DRenderer, CSS3DObject } from 'three/addons/renderers/CSS3DRenderer.js';
 
 gsap.registerPlugin(ScrollTrigger, ScrollToPlugin);
 
-const NAV_OFFSET = 90;
 const isMobile = window.innerWidth < 768;
+const lowPower = isMobile || (navigator.hardwareConcurrency || 8) <= 4;
 let visible = true;
 
-// ─── Smooth scroll (Lenis + GSAP) ───────────────────────────────────
-const lenis = new Lenis({ lerp: 0.1, smoothWheel: true });
+// Phone screen CSS pixels (must match CSS vars)
+const PHONE_CSS_W = 300;
+const PHONE_CSS_H = 650;
+const SCREEN_WORLD_W = 0.68; // world units for CSS3D scale
+
+// ─── Lenis ──────────────────────────────────────────────────────────
+const lenis = new Lenis({ lerp: lowPower ? 0.12 : 0.09, smoothWheel: true });
 lenis.on('scroll', ScrollTrigger.update);
 gsap.ticker.add((t) => lenis.raf(t * 1000));
 gsap.ticker.lagSmoothing(0);
 
-// ─── Three.js — apstraktna 3D pozadina ──────────────────────────────
+// ─── Scene ──────────────────────────────────────────────────────────
 const canvas = document.getElementById('canvas-3d');
 const scene = new THREE.Scene();
-const camera = new THREE.PerspectiveCamera(50, innerWidth / innerHeight, 0.1, 100);
-camera.position.set(0, 0, 8);
+const camera = new THREE.PerspectiveCamera(38, innerWidth / innerHeight, 0.1, 80);
+camera.position.set(0, 0.15, 6.2);
 
 const renderer = new THREE.WebGLRenderer({
-    canvas,
-    alpha: true,
-    antialias: !isMobile,
-    powerPreference: 'high-performance',
+    canvas, alpha: true, antialias: !lowPower, powerPreference: 'high-performance',
 });
 renderer.setSize(innerWidth, innerHeight);
-renderer.setPixelRatio(Math.min(devicePixelRatio, isMobile ? 1 : 1.5));
+renderer.setPixelRatio(Math.min(devicePixelRatio, lowPower ? 1 : 1.6));
 renderer.setClearColor(0x000000, 0);
+renderer.toneMapping = THREE.ACESFilmicToneMapping;
+renderer.toneMappingExposure = 1.35;
 
+const cssRenderer = new CSS3DRenderer();
+cssRenderer.setSize(innerWidth, innerHeight);
+cssRenderer.domElement.style.cssText = 'position:fixed;inset:0;z-index:2;pointer-events:none;';
+document.body.appendChild(cssRenderer.domElement);
+
+// Lights
 scene.add(new THREE.AmbientLight(0xffffff, 0.4));
-const key = new THREE.DirectionalLight(0xaabbff, 1.2);
-key.position.set(4, 6, 5);
+scene.add(new THREE.HemisphereLight(0xffe0c8, 0x101428, 0.55));
+const key = new THREE.DirectionalLight(0xffffff, 2.2);
+key.position.set(3.5, 5, 7);
 scene.add(key);
+const rim = new THREE.DirectionalLight(0x88aaff, 1.1);
+rim.position.set(-5, 1, -3);
+scene.add(rim);
+const fill = new THREE.DirectionalLight(0xffb07a, 0.55);
+fill.position.set(0, -2, 4);
+scene.add(fill);
 
-// Soft aurora plane
+// Soft aurora
 const auroraMat = new THREE.ShaderMaterial({
     uniforms: {
         uTime: { value: 0 },
         uScroll: { value: 0 },
-        uMouse: { value: new THREE.Vector2(0, 0) },
-        uColorA: { value: new THREE.Color('#1a2a6c') },
-        uColorB: { value: new THREE.Color('#6e8cff') },
-        uColorC: { value: new THREE.Color('#a78bfa') },
+        uMouse: { value: new THREE.Vector2() },
     },
-    vertexShader: `
-        varying vec2 vUv;
-        void main() {
-            vUv = uv;
-            gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
-        }
-    `,
+    vertexShader: `varying vec2 vUv; void main(){ vUv=uv; gl_Position=projectionMatrix*modelViewMatrix*vec4(position,1.); }`,
     fragmentShader: `
-        varying vec2 vUv;
-        uniform float uTime, uScroll;
-        uniform vec2 uMouse;
-        uniform vec3 uColorA, uColorB, uColorC;
-        void main() {
-            vec2 uv = vUv + uMouse * 0.05;
-            float w1 = sin(uv.x * 3.2 + uTime * 0.3 + uScroll * 2.0) * 0.5 + 0.5;
-            float w2 = sin(uv.y * 2.6 - uTime * 0.22 + uScroll) * 0.5 + 0.5;
-            float w3 = sin((uv.x + uv.y) * 2.0 + uTime * 0.15) * 0.5 + 0.5;
-            vec3 col = mix(uColorA, uColorB, w1);
-            col = mix(col, uColorC, w2 * 0.45);
-            col += uColorB * w3 * 0.12;
-            float vig = smoothstep(1.15, 0.25, length(uv - 0.5));
-            gl_FragColor = vec4(col * vig, 0.55);
-        }
-    `,
-    transparent: true,
-    depthWrite: false,
+        varying vec2 vUv; uniform float uTime,uScroll; uniform vec2 uMouse;
+        void main(){
+            vec2 uv=vUv+uMouse*0.04;
+            float a=sin(uv.x*3.+uTime*.25+uScroll*2.)*.5+.5;
+            float b=sin(uv.y*2.5-uTime*.2)*.5+.5;
+            vec3 col=vec3(.04,.06,.12)+vec3(.18,.2,.5)*a*.4+vec3(.45,.22,.14)*b*.16;
+            float vig=smoothstep(1.2,.25,length(uv-.5));
+            gl_FragColor=vec4(col*vig,.65);
+        }`,
+    transparent: true, depthWrite: false,
 });
-const aurora = new THREE.Mesh(new THREE.PlaneGeometry(24, 16), auroraMat);
+const aurora = new THREE.Mesh(new THREE.PlaneGeometry(26, 16), auroraMat);
 aurora.position.z = -6;
 scene.add(aurora);
 
-// Fluid particle sphere
-const COUNT = isMobile ? 900 : 2200;
-const positions = new Float32Array(COUNT * 3);
-const basePositions = new Float32Array(COUNT * 3);
-const phases = new Float32Array(COUNT);
-
-for (let i = 0; i < COUNT; i++) {
-    const u = Math.random();
-    const v = Math.random();
-    const theta = 2 * Math.PI * u;
-    const phi = Math.acos(2 * v - 1);
-    const r = 2.2 + (Math.random() - 0.5) * 0.35;
-    const x = r * Math.sin(phi) * Math.cos(theta);
-    const y = r * Math.sin(phi) * Math.sin(theta);
-    const z = r * Math.cos(phi);
-    positions[i * 3] = x;
-    positions[i * 3 + 1] = y;
-    positions[i * 3 + 2] = z;
-    basePositions[i * 3] = x;
-    basePositions[i * 3 + 1] = y;
-    basePositions[i * 3 + 2] = z;
-    phases[i] = Math.random() * Math.PI * 2;
-}
-
-const sphereGeo = new THREE.BufferGeometry();
-sphereGeo.setAttribute('position', new THREE.BufferAttribute(positions, 3));
-const sphereMat = new THREE.PointsMaterial({
-    color: 0x8eabff,
-    size: isMobile ? 0.035 : 0.028,
-    transparent: true,
-    opacity: 0.75,
-    sizeAttenuation: true,
-    depthWrite: false,
-    blending: THREE.AdditiveBlending,
-});
-const particleSphere = new THREE.Points(sphereGeo, sphereMat);
-particleSphere.position.set(2.2, 0.2, 0);
-scene.add(particleSphere);
-
-// Elegant wave ribbons
-const waveGroup = new THREE.Group();
-scene.add(waveGroup);
-const waves = [];
-const waveColors = [0x6e8cff, 0xa78bfa, 0xe8a87c];
-
-for (let w = 0; w < 3; w++) {
-    const pts = [];
-    for (let i = 0; i <= 60; i++) {
-        const t = (i / 60) * Math.PI * 2;
-        pts.push(new THREE.Vector3(
-            Math.cos(t) * (3.2 + w * 0.35),
-            Math.sin(t * 2 + w) * 0.35,
-            Math.sin(t) * (3.2 + w * 0.35)
-        ));
-    }
-    const curve = new THREE.CatmullRomCurve3(pts, true);
-    const tube = new THREE.Mesh(
-        new THREE.TubeGeometry(curve, 120, 0.012, 6, true),
-        new THREE.MeshBasicMaterial({
-            color: waveColors[w],
-            transparent: true,
-            opacity: 0.28 - w * 0.05,
-        })
-    );
-    waveGroup.add(tube);
-    waves.push(tube);
-}
-waveGroup.position.set(2.2, 0.2, 0);
-
-// Ambient floating particles
-const ambientCount = isMobile ? 40 : 90;
-const ambPos = new Float32Array(ambientCount * 3);
-for (let i = 0; i < ambientCount; i++) {
-    ambPos[i * 3] = (Math.random() - 0.5) * 16;
-    ambPos[i * 3 + 1] = (Math.random() - 0.5) * 12;
-    ambPos[i * 3 + 2] = (Math.random() - 0.5) * 8 - 2;
-}
-const ambient = new THREE.Points(
-    new THREE.BufferGeometry().setAttribute('position', new THREE.BufferAttribute(ambPos, 3)),
-    new THREE.PointsMaterial({ color: 0xa8b8ff, size: 0.03, transparent: true, opacity: 0.35 })
+// Stage ring
+const ring = new THREE.Mesh(
+    new THREE.RingGeometry(1.5, 1.62, 64),
+    new THREE.MeshBasicMaterial({ color: 0xff8a4c, transparent: true, opacity: 0.14, side: THREE.DoubleSide })
 );
-scene.add(ambient);
+ring.rotation.x = -Math.PI / 2;
+ring.position.y = -1.25;
+scene.add(ring);
 
+const pCount = lowPower ? 35 : 80;
+const pPos = new Float32Array(pCount * 3);
+for (let i = 0; i < pCount; i++) {
+    pPos[i * 3] = (Math.random() - 0.5) * 14;
+    pPos[i * 3 + 1] = (Math.random() - 0.5) * 10;
+    pPos[i * 3 + 2] = (Math.random() - 0.5) * 8 - 1;
+}
+const particles = new THREE.Points(
+    new THREE.BufferGeometry().setAttribute('position', new THREE.BufferAttribute(pPos, 3)),
+    new THREE.PointsMaterial({ color: 0xffb088, size: 0.028, transparent: true, opacity: 0.4 })
+);
+scene.add(particles);
+
+// ─── iPhone 17 Pro (Cosmic Orange + camera plateau) ─────────────────
+const alu = new THREE.MeshStandardMaterial({ color: 0xe07a45, metalness: 0.88, roughness: 0.2 });
+const aluBright = new THREE.MeshStandardMaterial({ color: 0xf0a070, metalness: 0.92, roughness: 0.14 });
+const aluDark = new THREE.MeshStandardMaterial({ color: 0xb85a30, metalness: 0.9, roughness: 0.18 });
+const black = new THREE.MeshStandardMaterial({ color: 0x050507, metalness: 0.7, roughness: 0.2 });
+const lensMat = new THREE.MeshStandardMaterial({ color: 0x060608, metalness: 0.96, roughness: 0.04 });
+const btnMat = new THREE.MeshStandardMaterial({ color: 0xc86a38, metalness: 0.9, roughness: 0.18 });
+
+function makeLens(r, d = 0.02) {
+    const g = new THREE.Group();
+    const outer = new THREE.Mesh(new THREE.CylinderGeometry(r, r, d, 28), aluBright);
+    outer.rotation.x = Math.PI / 2;
+    g.add(outer);
+    const glass = new THREE.Mesh(new THREE.CylinderGeometry(r * 0.7, r * 0.7, d + 0.004, 28), lensMat);
+    glass.rotation.x = Math.PI / 2;
+    glass.position.z = -0.002;
+    g.add(glass);
+    return g;
+}
+
+function makeIPhone17Pro() {
+    const g = new THREE.Group();
+    const W = 0.76, H = 1.62, D = 0.086, R = 0.048;
+
+    g.add(new THREE.Mesh(new RoundedBoxGeometry(W, H, D, 4, R), alu));
+    const edge = new THREE.Mesh(new RoundedBoxGeometry(W + 0.003, H + 0.003, D - 0.018, 2, R), aluBright);
+    g.add(edge);
+
+    // MagSafe glass cutout (lower back)
+    const backGlass = new THREE.Mesh(
+        new RoundedBoxGeometry(W - 0.05, H * 0.4, 0.004, 2, 0.03),
+        black
+    );
+    backGlass.position.set(0, -H * 0.22, -D / 2 - 0.001);
+    g.add(backGlass);
+
+    // Buttons
+    const action = new THREE.Mesh(new RoundedBoxGeometry(0.007, 0.048, 0.028, 1, 0.002), btnMat);
+    action.position.set(W / 2 + 0.002, 0.34, 0);
+    g.add(action);
+    const pwr = new THREE.Mesh(new RoundedBoxGeometry(0.007, 0.088, 0.026, 1, 0.002), btnMat);
+    pwr.position.set(-W / 2 - 0.002, 0.2, 0);
+    g.add(pwr);
+    [0.05, -0.09].forEach((y) => {
+        const v = new THREE.Mesh(new RoundedBoxGeometry(0.007, 0.05, 0.026, 1, 0.002), btnMat);
+        v.position.set(-W / 2 - 0.002, y, 0);
+        g.add(v);
+    });
+
+    // USB-C
+    const port = new THREE.Mesh(
+        new RoundedBoxGeometry(0.1, 0.008, 0.018, 1, 0.002),
+        new THREE.MeshStandardMaterial({ color: 0x1a1a1a, metalness: 0.7, roughness: 0.35 })
+    );
+    port.position.set(0, -H / 2 + 0.016, 0);
+    g.add(port);
+
+    // Camera plateau — full width
+    const plateau = new THREE.Group();
+    plateau.position.set(0, H / 2 - 0.18, -D / 2 - 0.014);
+    plateau.add(new THREE.Mesh(new RoundedBoxGeometry(W - 0.02, 0.34, 0.034, 3, 0.055), aluDark));
+    const top = new THREE.Mesh(new RoundedBoxGeometry(W - 0.04, 0.3, 0.008, 2, 0.045), alu);
+    top.position.z = -0.018;
+    plateau.add(top);
+
+    const l1 = makeLens(0.058, 0.022); l1.position.set(-0.21, 0.05, -0.024); plateau.add(l1);
+    const l2 = makeLens(0.058, 0.022); l2.position.set(-0.07, 0.05, -0.024); plateau.add(l2);
+    const l3 = makeLens(0.065, 0.026); l3.position.set(-0.14, -0.07, -0.026); plateau.add(l3);
+
+    const flash = new THREE.Mesh(
+        new THREE.CylinderGeometry(0.024, 0.024, 0.01, 16),
+        new THREE.MeshStandardMaterial({ color: 0xfff6e8, emissive: 0xffaa66, emissiveIntensity: 0.6, metalness: 0.3, roughness: 0.2 })
+    );
+    flash.rotation.x = Math.PI / 2;
+    flash.position.set(0.21, 0.05, -0.024);
+    plateau.add(flash);
+
+    const lidar = new THREE.Mesh(
+        new THREE.CylinderGeometry(0.03, 0.03, 0.008, 16),
+        new THREE.MeshStandardMaterial({ color: 0x111114, metalness: 0.85, roughness: 0.2 })
+    );
+    lidar.rotation.x = Math.PI / 2;
+    lidar.position.set(0.21, -0.065, -0.024);
+    plateau.add(lidar);
+    g.add(plateau);
+
+    // Front bezel (hole for CSS3D screen — use dark plane behind HTML)
+    const bezel = new THREE.Mesh(new RoundedBoxGeometry(W - 0.014, H - 0.014, D - 0.01, 3, 0.04), black);
+    bezel.position.z = 0.003;
+    g.add(bezel);
+
+    // Black screen backing (HTML sits slightly in front)
+    const screenBack = new THREE.Mesh(
+        new RoundedBoxGeometry(SCREEN_WORLD_W, 1.48, 0.002, 3, 0.02),
+        new THREE.MeshBasicMaterial({ color: 0x0b0d18 })
+    );
+    screenBack.position.z = D / 2 - 0.002;
+    g.add(screenBack);
+
+    // Dynamic Island (WebGL, in front of CSS3D slightly via position)
+    const island = new THREE.Mesh(
+        new RoundedBoxGeometry(0.24, 0.03, 0.004, 2, 0.01),
+        new THREE.MeshStandardMaterial({ color: 0x000000, metalness: 0.85, roughness: 0.1 })
+    );
+    island.position.set(0, H / 2 - 0.072, D / 2 + 0.006);
+    g.add(island);
+
+    g.userData.D = D;
+    g.userData.H = H;
+    return g;
+}
+
+const phone = makeIPhone17Pro();
+phone.position.set(0, 0, 0);
+phone.rotation.set(0.12, -0.35, 0.04);
+scene.add(phone);
+
+// CSS3D — real HTML site glued to screen (drei Html equivalent)
+const phoneRoot = document.getElementById('phone-html-root');
+const phoneSite = document.getElementById('phone-site');
+const phoneViewport = document.getElementById('phone-viewport');
+const cssObject = new CSS3DObject(phoneRoot);
+const cssScale = SCREEN_WORLD_W / PHONE_CSS_W;
+cssObject.scale.set(cssScale, cssScale, cssScale);
+cssObject.position.set(0, 0.01, phone.userData.D / 2 + 0.001);
+phone.add(cssObject);
+phoneRoot.style.left = '0';
+phoneRoot.style.top = '0';
+phoneRoot.style.position = 'absolute';
+
+// ─── State ──────────────────────────────────────────────────────────
 const scroll = { p: 0 };
-const mouse = { x: 0, y: 0, tx: 0, ty: 0 };
-const colorTargets = [
-    new THREE.Color('#6e8cff'),
-    new THREE.Color('#a78bfa'),
-    new THREE.Color('#e8a87c'),
-    new THREE.Color('#55c2a8'),
-];
+const view = { index: 0, name: 'hero' };
+const views = ['hero', 'about', 'services', 'contact'];
+const sectionEls = {
+    hero: document.getElementById('ps-hero'),
+    about: document.getElementById('ps-about'),
+    services: document.getElementById('ps-services'),
+    contact: document.getElementById('ps-contact'),
+};
 
+const mouse = { x: 0, y: 0, tx: 0, ty: 0 };
 addEventListener('mousemove', (e) => {
     mouse.tx = (e.clientX / innerWidth - 0.5) * 2;
     mouse.ty = (e.clientY / innerHeight - 0.5) * 2;
 }, { passive: true });
+document.addEventListener('visibilitychange', () => { visible = !document.hidden; });
 
-document.addEventListener('visibilitychange', () => {
-    visible = !document.hidden;
+function scrollPhoneTo(name, smooth = true) {
+    const el = sectionEls[name];
+    if (!el || !phoneSite) return;
+    view.name = name;
+    view.index = Math.max(0, views.indexOf(name));
+    const y = el.offsetTop - 8;
+    if (smooth) {
+        gsap.to(phoneSite, { y: -y, duration: 0.7, ease: 'power3.out' });
+    } else {
+        gsap.set(phoneSite, { y: -y });
+    }
+    document.querySelectorAll('[data-screen]').forEach((btn) => {
+        btn.classList.toggle('active', btn.dataset.screen === name);
+    });
+    document.querySelectorAll('.dash-section-btn').forEach((btn) => {
+        btn.classList.toggle('active', btn.dataset.screen === name);
+    });
+}
+
+function goStage(name) {
+    const stage = document.getElementById(`stage-${name}`);
+    if (stage) lenis.scrollTo(stage, { duration: 1.1 });
+    scrollPhoneTo(name);
+    document.getElementById('dash-mobile')?.classList.remove('open');
+}
+
+document.querySelectorAll('[data-screen]').forEach((btn) => {
+    btn.addEventListener('click', () => goStage(btn.dataset.screen));
+});
+document.getElementById('dash-toggle')?.addEventListener('click', () => {
+    document.getElementById('dash-mobile')?.classList.toggle('open');
 });
 
+// Initial
+scrollPhoneTo('hero', false);
+
+// Camera / phone scroll path
+const camPath = new THREE.CatmullRomCurve3([
+    new THREE.Vector3(0.15, 0.2, 6.2),
+    new THREE.Vector3(-0.9, 0.35, 4.8),
+    new THREE.Vector3(0.6, -0.1, 5.2),
+    new THREE.Vector3(0.1, 0.15, 3.6),
+]);
+
 const clock = new THREE.Clock();
-const posAttr = sphereGeo.getAttribute('position');
+let tick = 0;
 
 function animate() {
     requestAnimationFrame(animate);
     if (!visible) return;
+    tick++;
 
     const t = clock.getElapsedTime();
     mouse.x += (mouse.tx - mouse.x) * 0.06;
@@ -190,54 +306,44 @@ function animate() {
     auroraMat.uniforms.uScroll.value = scroll.p;
     auroraMat.uniforms.uMouse.value.set(mouse.x, mouse.y);
 
-    // Scroll → position / rotation / color
-    const sectionT = scroll.p;
-    const c1 = colorTargets[Math.floor(sectionT * 3.99) % 4];
-    const c2 = colorTargets[Math.min(Math.floor(sectionT * 3.99) + 1, 3)];
-    const mix = (sectionT * 3.99) % 1;
-    sphereMat.color.lerpColors(c1, c2, mix);
+    const p = scroll.p;
+    const cp = camPath.getPoint(Math.min(p * 1.02, 0.99));
+    camera.position.lerp(new THREE.Vector3(
+        cp.x + mouse.x * 0.2,
+        cp.y - mouse.y * 0.12,
+        cp.z
+    ), 0.08);
 
-    // Morph particle sphere (fluid breathing)
-    for (let i = 0; i < COUNT; i++) {
-        const bx = basePositions[i * 3];
-        const by = basePositions[i * 3 + 1];
-        const bz = basePositions[i * 3 + 2];
-        const ph = phases[i];
-        const pulse = 1 + Math.sin(t * 1.4 + ph) * 0.06 + scroll.p * 0.12;
-        const mx = mouse.x * 0.25;
-        const my = -mouse.y * 0.2;
-        posAttr.array[i * 3] = bx * pulse + mx * (0.15 + bz * 0.04);
-        posAttr.array[i * 3 + 1] = by * pulse + my * (0.15 + bx * 0.03);
-        posAttr.array[i * 3 + 2] = bz * pulse;
+    // Phone tumble + zoom feel
+    const targetY = -0.35 + p * Math.PI * 1.55;
+    const targetX = 0.12 + p * 0.35;
+    const targetZ = 0.04 + Math.sin(p * Math.PI) * 0.1;
+    phone.rotation.x += (targetX - phone.rotation.x) * 0.1;
+    phone.rotation.y += (targetY - phone.rotation.y) * 0.1;
+    phone.rotation.z += (targetZ - phone.rotation.z) * 0.1;
+    phone.position.y = Math.sin(t * 1.1) * 0.03 - p * 0.08;
+
+    ring.position.x = phone.position.x;
+    ring.rotation.z = t * 0.08;
+
+    camera.lookAt(phone.position.x * 0.4, phone.position.y * 0.2, 0);
+
+    // Hide HTML screen when phone back faces camera (CSS3D has no depth occlusion)
+    const worldQuat = new THREE.Quaternion();
+    phone.getWorldQuaternion(worldQuat);
+    const forward = new THREE.Vector3(0, 0, 1).applyQuaternion(worldQuat);
+    const toCam = new THREE.Vector3().subVectors(camera.position, phone.position).normalize();
+    const facing = forward.dot(toCam);
+    phoneRoot.style.opacity = facing > 0.15 ? '1' : '0';
+    phoneRoot.style.transition = 'opacity .2s linear';
+
+    if (tick % 4 === 0) particles.rotation.y = t * 0.015;
+
+    if (lowPower && tick % 2) {
+        // still need CSS3D sync every other frame
     }
-    posAttr.needsUpdate = true;
-
-    // Sphere follows scroll path + mouse parallax
-    const targetX = THREE.MathUtils.lerp(2.2, -1.8, sectionT) + mouse.x * 0.6;
-    const targetY = THREE.MathUtils.lerp(0.2, 0.8, Math.sin(sectionT * Math.PI)) - mouse.y * 0.4;
-    const targetZ = THREE.MathUtils.lerp(0, -1.5, sectionT);
-
-    particleSphere.position.x += (targetX - particleSphere.position.x) * 0.05;
-    particleSphere.position.y += (targetY - particleSphere.position.y) * 0.05;
-    particleSphere.position.z += (targetZ - particleSphere.position.z) * 0.05;
-
-    particleSphere.rotation.y = t * 0.12 + sectionT * Math.PI * 1.2 + mouse.x * 0.3;
-    particleSphere.rotation.x = Math.sin(t * 0.35) * 0.15 + sectionT * 0.4 + mouse.y * 0.2;
-
-    waveGroup.position.copy(particleSphere.position);
-    waveGroup.rotation.y = -t * 0.08 + sectionT * 0.9;
-    waveGroup.rotation.z = Math.sin(t * 0.2) * 0.1;
-    waves.forEach((wave, i) => {
-        wave.material.opacity = 0.18 + Math.sin(t * 0.5 + i) * 0.06 + sectionT * 0.08;
-        wave.material.color.copy(sphereMat.color);
-    });
-
-    ambient.rotation.y = t * 0.02;
-    camera.position.x += (mouse.x * 0.35 - camera.position.x) * 0.04;
-    camera.position.y += (-mouse.y * 0.25 - camera.position.y) * 0.04;
-    camera.lookAt(0, 0, 0);
-
     renderer.render(scene, camera);
+    cssRenderer.render(scene, camera);
 }
 animate();
 
@@ -245,173 +351,53 @@ addEventListener('resize', () => {
     camera.aspect = innerWidth / innerHeight;
     camera.updateProjectionMatrix();
     renderer.setSize(innerWidth, innerHeight);
+    cssRenderer.setSize(innerWidth, innerHeight);
 }, { passive: true });
 
-// ─── Split words for hero entrance ──────────────────────────────────
-document.querySelectorAll('[data-split]').forEach((el) => {
-    el.innerHTML = el.textContent.trim().split(' ').map((w) => `<span class="word">${w}</span>`).join(' ');
-});
-
-// ─── Navigation ─────────────────────────────────────────────────────
-function goTo(hash) {
-    const el = document.querySelector(hash);
-    if (el) lenis.scrollTo(el, { offset: -NAV_OFFSET, duration: 1.15 });
-}
-
-document.querySelectorAll('a[href^="#"]').forEach((a) => {
-    a.addEventListener('click', (e) => {
-        const h = a.getAttribute('href');
-        if (!h || h === '#') return;
-        e.preventDefault();
-        goTo(h);
-        document.getElementById('nav-mobile')?.classList.remove('open');
-    });
-});
-
-document.getElementById('nav-toggle')?.addEventListener('click', () => {
-    document.getElementById('nav-mobile')?.classList.toggle('open');
-});
-
-// ─── GSAP ScrollTrigger — cinematic reveals ─────────────────────────
+// ─── GSAP scroll stages ─────────────────────────────────────────────
 const bar = document.querySelector('.scroll-progress-bar');
-const nav = document.getElementById('nav');
 
 ScrollTrigger.create({
-    trigger: '.scroll-container',
+    trigger: '#scroll-stage',
     start: 'top top',
     end: 'bottom bottom',
+    scrub: true,
     onUpdate: (self) => {
         scroll.p = self.progress;
         if (bar) bar.style.width = `${self.progress * 100}%`;
+
+        // Sync phone site content with overall progress
+        const idx = Math.min(3, Math.floor(self.progress * 3.999));
+        const name = views[idx];
+        if (name !== view.name) scrollPhoneTo(name, true);
     },
 });
 
-ScrollTrigger.create({
-    start: 50,
-    onUpdate: (self) => nav?.classList.toggle('scrolled', self.scroll() > 50),
+views.forEach((name) => {
+    ScrollTrigger.create({
+        trigger: `#stage-${name}`,
+        start: 'top center',
+        end: 'bottom center',
+        onEnter: () => scrollPhoneTo(name, true),
+        onEnterBack: () => scrollPhoneTo(name, true),
+    });
 });
 
-// Hero entrance
-gsap.timeline({ delay: 0.12 })
-    .from('.section-hero .label', { opacity: 0, y: 20, duration: 0.55, ease: 'power2.out' })
-    .from('.hero-title .word', {
-        opacity: 0, y: 42, duration: 0.7, stagger: 0.07, ease: 'power3.out',
-    }, '-=0.25')
-    .from('.hero-desc', { opacity: 0, y: 18, duration: 0.45 }, '-=0.2')
-    .from('.hero-actions', { opacity: 0, y: 14, duration: 0.4 }, '-=0.15')
-    .from('.scroll-indicator', { opacity: 0, duration: 0.4 }, '-=0.1');
+gsap.timeline({ delay: 0.15 })
+    .from('.dash-nav', { y: -30, opacity: 0, duration: 0.6, ease: 'power3.out' })
+    .from('.dash-side-left', { x: -40, opacity: 0, duration: 0.7, ease: 'power3.out' }, '-=0.35')
+    .from('.dash-side-right', { x: 40, opacity: 0, duration: 0.7, ease: 'power3.out' }, '-=0.55')
+    .from('.dash-hint', { opacity: 0, duration: 0.4 }, '-=0.3');
 
 gsap.to('.scroll-line', {
     scaleY: 0.35, transformOrigin: 'top', duration: 1.15, repeat: -1, yoyo: true, ease: 'power1.inOut',
 });
 
-// Soft hero parallax (no heavy pin — keeps content readable)
-gsap.to('.hero-content', {
-    scrollTrigger: {
-        trigger: '.section-hero',
-        start: 'top top',
-        end: 'bottom top',
-        scrub: 0.6,
-    },
-    y: -80,
-    opacity: 0.25,
-    ease: 'none',
-});
-
-// Section glass panels — fade + lift
-document.querySelectorAll('[data-glass]').forEach((panel) => {
-    const section = panel.closest('.section');
-    if (!section || section.id === 'hero') return;
-
-    gsap.from(panel, {
-        scrollTrigger: {
-            trigger: section,
-            start: 'top 82%',
-            toggleActions: 'play none none reverse',
-        },
-        opacity: 0,
-        y: 56,
-        duration: 0.85,
-        ease: 'power3.out',
-    });
-});
-
-gsap.utils.toArray('.section-head, .display-title, .body-text').forEach((el) => {
-    gsap.from(el, {
-        scrollTrigger: {
-            trigger: el,
-            start: 'top 88%',
-            toggleActions: 'play none none reverse',
-        },
-        opacity: 0,
-        y: 28,
-        duration: 0.65,
-        ease: 'power2.out',
-    });
-});
-
-gsap.utils.toArray('.service-card').forEach((card, i) => {
-    gsap.from(card, {
-        scrollTrigger: {
-            trigger: card,
-            start: 'top 90%',
-            toggleActions: 'play none none reverse',
-        },
-        opacity: 0,
-        y: 40,
-        duration: 0.55,
-        delay: (i % 3) * 0.06,
-        ease: 'power2.out',
-    });
-});
-
-gsap.utils.toArray('.contact-card, .map-wrap').forEach((el, i) => {
-    gsap.from(el, {
-        scrollTrigger: {
-            trigger: el,
-            start: 'top 90%',
-            toggleActions: 'play none none reverse',
-        },
-        opacity: 0,
-        y: 30,
-        duration: 0.5,
-        delay: i * 0.05,
-        ease: 'power2.out',
-    });
-});
-
+// Fade hint after first scroll
 ScrollTrigger.create({
-    trigger: '.stats-row',
-    start: 'top 85%',
-    once: true,
-    onEnter: () => {
-        gsap.from('.stat', { opacity: 0, y: 18, stagger: 0.1, duration: 0.5, ease: 'power2.out' });
-        document.querySelectorAll('.stat-num').forEach((el) => {
-            const n = parseInt(el.dataset.count, 10);
-            gsap.to({ v: 0 }, {
-                v: n,
-                duration: 1.35,
-                ease: 'power2.out',
-                onUpdate() {
-                    el.textContent = Math.round(this.targets()[0].v) + (n === 100 ? '%' : '+');
-                },
-            });
-        });
+    start: 120,
+    onUpdate: (self) => {
+        const hint = document.querySelector('.dash-hint');
+        if (hint) hint.style.opacity = self.scroll() > 120 ? '0' : '1';
     },
 });
-
-['hero', 'about', 'services', 'contact'].forEach((id) => {
-    ScrollTrigger.create({
-        trigger: `#${id}`,
-        start: 'top 45%',
-        end: 'bottom 45%',
-        onEnter: () => setNav(id),
-        onEnterBack: () => setNav(id),
-    });
-});
-
-function setNav(id) {
-    document.querySelectorAll('.nav-link, .nav-mobile-link').forEach((l) => {
-        l.classList.toggle('active', l.getAttribute('href') === `#${id}`);
-    });
-}
