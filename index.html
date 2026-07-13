@@ -8,136 +8,144 @@
     <link rel="stylesheet" href="index.css">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Syne:wght@500;600;700;800&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@500;600;700;800&family=Rajdhani:wght@400;500;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
 </head>
 <body>
 
-    <div class="bg-mesh" aria-hidden="true"></div>
+    <div class="scanlines" aria-hidden="true"></div>
     <div class="scroll-progress"><div class="scroll-progress-bar"></div></div>
     <canvas id="canvas-3d" aria-hidden="true"></canvas>
 
-    <!-- Dashboard UI oko telefona -->
-    <div class="dashboard" id="dashboard">
-        <header class="dash-nav glass">
-            <a href="#stage-hero" class="dash-brand" data-screen="hero">
-                <img src="logo.jpg" alt="B&D" class="dash-logo">
-                <span>B & D</span>
-            </a>
-            <nav class="dash-menu">
-                <button type="button" class="dash-btn active" data-screen="hero">Početna</button>
-                <button type="button" class="dash-btn" data-screen="about">O nama</button>
-                <button type="button" class="dash-btn" data-screen="services">Usluge</button>
-                <button type="button" class="dash-btn" data-screen="contact">Kontakt</button>
-            </nav>
-            <button class="dash-toggle" id="dash-toggle" aria-label="Meni"><span></span><span></span></button>
-        </header>
+    <nav class="nav" id="nav">
+        <a href="#hero" class="nav-brand">
+            <img src="logo.jpg" alt="B&D" class="nav-logo">
+            <span>B &amp; D <em>MOBILE</em></span>
+        </a>
+        <ul class="nav-menu">
+            <li><a href="#hero" class="nav-link active">Početna</a></li>
+            <li><a href="#about" class="nav-link">O nama</a></li>
+            <li><a href="#services" class="nav-link">Usluge</a></li>
+            <li><a href="#contact" class="nav-link">Kontakt</a></li>
+        </ul>
+        <a href="tel:015873210" class="nav-call"><i class="fas fa-phone"></i> 015 873 210</a>
+        <button class="nav-toggle" id="nav-toggle" aria-label="Meni"><span></span><span></span></button>
+    </nav>
 
-        <div class="dash-mobile" id="dash-mobile">
-            <button type="button" class="dash-btn" data-screen="hero">Početna</button>
-            <button type="button" class="dash-btn" data-screen="about">O nama</button>
-            <button type="button" class="dash-btn" data-screen="services">Usluge</button>
-            <button type="button" class="dash-btn" data-screen="contact">Kontakt</button>
-        </div>
-
-        <aside class="dash-side dash-side-left glass">
-            <p class="dash-eyebrow">Loznica · Servis & Prodaja</p>
-            <h1 class="dash-title">Vaš telefon<br><span>u 3D fokusu</span></h1>
-            <p class="dash-copy">Skrolujte ili birajte sekcije — ceo sajt živi na ekranu iPhone 17 Pro.</p>
-            <div class="dash-actions">
-                <button type="button" class="btn btn-primary" data-screen="services">Pogledaj usluge</button>
-                <button type="button" class="btn btn-ghost" data-screen="contact">Kontakt</button>
-            </div>
-        </aside>
-
-        <aside class="dash-side dash-side-right glass">
-            <p class="dash-panel-label">Na ekranu</p>
-            <ul class="dash-sections">
-                <li><button type="button" class="dash-section-btn active" data-screen="hero"><span>01</span> Početna</button></li>
-                <li><button type="button" class="dash-section-btn" data-screen="about"><span>02</span> O nama</button></li>
-                <li><button type="button" class="dash-section-btn" data-screen="services"><span>03</span> Usluge</button></li>
-                <li><button type="button" class="dash-section-btn" data-screen="contact"><span>04</span> Kontakt</button></li>
-            </ul>
-            <div class="dash-meta">
-                <a href="tel:015873210">015 873 210</a>
-                <a href="https://www.instagram.com/bdmobill?utm_source=ig_web_button_share_sheet&igsh=ZDNlZDc0MzIxNw==" target="_blank" rel="noopener">@bdmobil</a>
-            </div>
-        </aside>
-
-        <div class="dash-hint">
-            <span>Scroll</span>
-            <div class="scroll-line"></div>
-        </div>
+    <div class="nav-drawer" id="nav-drawer">
+        <a href="#hero" class="nav-drawer-link">Početna</a>
+        <a href="#about" class="nav-drawer-link">O nama</a>
+        <a href="#services" class="nav-drawer-link">Usluge</a>
+        <a href="#contact" class="nav-drawer-link">Kontakt</a>
     </div>
 
-    <!-- Scroll stage — pokreće kameru / rotaciju telefona -->
-    <main class="scroll-stage" id="scroll-stage" aria-hidden="true">
-        <section class="stage-section" id="stage-hero" data-view="hero"></section>
-        <section class="stage-section" id="stage-about" data-view="about"></section>
-        <section class="stage-section" id="stage-services" data-view="services"></section>
-        <section class="stage-section" id="stage-contact" data-view="contact"></section>
-    </main>
+    <main class="page">
 
-    <!-- Pravi sajt — samo na ekranu 3D telefona (CSS3D) -->
-    <div id="phone-html-root" aria-hidden="true">
-        <div class="phone-browser">
-            <div class="phone-browser-bar">
-                <span class="dot"></span><span class="dot"></span><span class="dot"></span>
-                <span class="phone-url">bdmobile.rs</span>
-            </div>
-            <div class="phone-viewport" id="phone-viewport">
-                <div class="phone-site" id="phone-site">
-
-                    <section class="ps-section" id="ps-hero" data-screen-section="hero">
-                        <p class="ps-label">Loznica · Servis & Prodaja</p>
-                        <h1 class="ps-title">Vaš telefon<br><em>u sigurnim rukama.</em></h1>
-                        <p class="ps-desc">Profesionalni servis mobilnih telefona, prodaja opreme i polovnih uređaja.</p>
-                        <div class="ps-actions">
-                            <span class="ps-btn primary">Pogledaj usluge</span>
-                            <span class="ps-btn ghost">Kontakt</span>
-                        </div>
-                    </section>
-
-                    <section class="ps-section" id="ps-about" data-screen-section="about">
-                        <div class="ps-head"><span>01</span><span>O nama</span></div>
-                        <h2>Tehnologija kojoj<br><em>možete verovati</em></h2>
-                        <p>B & D Mobile je vaš pouzdani partner za sve što se tiče mobilnih uređaja — od zamene ekrana do prodaje smart satova.</p>
-                        <div class="ps-stats">
-                            <div><strong>6+</strong><span>Usluga</span></div>
-                            <div><strong>2+</strong><span>Telefona</span></div>
-                            <div><strong>100%</strong><span>Posvećenost</span></div>
-                        </div>
-                    </section>
-
-                    <section class="ps-section" id="ps-services" data-screen-section="services">
-                        <div class="ps-head"><span>02</span><span>Usluge</span></div>
-                        <h2>Sve za vaš<br><em>mobilni uređaj</em></h2>
-                        <div class="ps-services">
-                            <article><img src="servis.jpg" alt=""><div><b>01</b><h3>Servis ekrana</h3><p>Brza zamena oštećenih ekrana.</p></div></article>
-                            <article><img src="oprema.jpg" alt=""><div><b>02</b><h3>Prateća oprema</h3><p>Punjači, kablovi, slušalice.</p></div></article>
-                            <article><img src="maskice.jpg" alt=""><div><b>03</b><h3>Maskice</h3><p>Zaštitne maske za sve modele.</p></div></article>
-                            <article><img src="baterije.jpg" alt=""><div><b>04</b><h3>Zamena baterija</h3><p>Puna autonomija uređaja.</p></div></article>
-                            <article><img src="prodaja.jpg" alt=""><div><b>05</b><h3>Prodaja telefona</h3><p>Novi i polovni telefoni.</p></div></article>
-                            <article><img src="satovi.jpg" alt=""><div><b>06</b><h3>Smart satovi</h3><p>Pametni satovi i oprema.</p></div></article>
-                        </div>
-                    </section>
-
-                    <section class="ps-section" id="ps-contact" data-screen-section="contact">
-                        <div class="ps-head"><span>03</span><span>Kontakt</span></div>
-                        <h2>Posetite nas<br><em>u Loznici</em></h2>
-                        <div class="ps-contact">
-                            <div><span>Lokacija</span><strong>Žikice Jovanovića 2</strong></div>
-                            <div><span>Telefon</span><strong>015 873 210</strong><strong>063 175 6615</strong></div>
-                            <div><span>Instagram</span><strong>@bdmobil</strong></div>
-                            <div><span>Facebook</span><strong>B & D Mobile</strong></div>
-                        </div>
-                        <p class="ps-footer">© 2026 B & D Mobile</p>
-                    </section>
-
+        <section class="section section-hero" id="hero">
+            <div class="panel hero-panel">
+                <p class="chip">Loznica · Tech Shop</p>
+                <h1 class="hero-title">
+                    Mobilna tehnologija<br>
+                    <span class="neon">pod kontrolom</span>
+                </h1>
+                <p class="hero-lead">Profesionalni servis, prodaja opreme i polovnih uređaja — brzo, pouzdano, lokalno.</p>
+                <div class="hero-cta">
+                    <a href="#services" class="btn btn-neon">Pogledaj usluge</a>
+                    <a href="#contact" class="btn btn-outline">Kontakt</a>
+                </div>
+                <div class="hero-tags">
+                    <span>Servis ekrana</span>
+                    <span>Baterije</span>
+                    <span>Prodaja</span>
+                    <span>Smart satovi</span>
                 </div>
             </div>
-        </div>
-    </div>
+            <div class="scroll-cue"><span>Scroll</span><i></i></div>
+        </section>
+
+        <section class="section section-about" id="about">
+            <div class="panel">
+                <div class="section-label"><span>01</span> O nama</div>
+                <h2 class="section-title">Šop kojem<br><span class="neon">verujete</span></h2>
+                <p class="section-text">B &amp; D Mobile je vaš pouzdani partner za sve što se tiče mobilnih uređaja — od zamene ekrana do prodaje smart satova.</p>
+                <div class="stats">
+                    <div class="stat"><strong data-count="6">0</strong><span>Usluga</span></div>
+                    <div class="stat"><strong data-count="2">0</strong><span>Telefona</span></div>
+                    <div class="stat"><strong data-count="100">0</strong><span>% Posvećenost</span></div>
+                </div>
+            </div>
+        </section>
+
+        <section class="section section-services" id="services">
+            <div class="panel panel-wide">
+                <div class="section-label"><span>02</span> Usluge</div>
+                <h2 class="section-title">Sve za vaš<br><span class="neon">uređaj</span></h2>
+                <div class="services-grid">
+                    <article class="service-card">
+                        <div class="service-media"><img src="servis.jpg" alt="Servis ekrana" loading="lazy"></div>
+                        <div class="service-info"><span>01</span><h3>Servis ekrana</h3><p>Brza zamena oštećenih ekrana.</p></div>
+                    </article>
+                    <article class="service-card">
+                        <div class="service-media"><img src="oprema.jpg" alt="Oprema" loading="lazy"></div>
+                        <div class="service-info"><span>02</span><h3>Prateća oprema</h3><p>Punjači, kablovi, slušalice.</p></div>
+                    </article>
+                    <article class="service-card">
+                        <div class="service-media"><img src="maskice.jpg" alt="Maskice" loading="lazy"></div>
+                        <div class="service-info"><span>03</span><h3>Maskice</h3><p>Zaštitne maske za sve modele.</p></div>
+                    </article>
+                    <article class="service-card">
+                        <div class="service-media"><img src="baterije.jpg" alt="Baterije" loading="lazy"></div>
+                        <div class="service-info"><span>04</span><h3>Zamena baterija</h3><p>Puna autonomija uređaja.</p></div>
+                    </article>
+                    <article class="service-card">
+                        <div class="service-media"><img src="prodaja.jpg" alt="Prodaja" loading="lazy"></div>
+                        <div class="service-info"><span>05</span><h3>Prodaja telefona</h3><p>Novi i polovni telefoni.</p></div>
+                    </article>
+                    <article class="service-card">
+                        <div class="service-media"><img src="satovi.jpg" alt="Satovi" loading="lazy"></div>
+                        <div class="service-info"><span>06</span><h3>Smart satovi</h3><p>Pametni satovi i oprema.</p></div>
+                    </article>
+                </div>
+            </div>
+        </section>
+
+        <section class="section section-contact" id="contact">
+            <div class="panel">
+                <div class="section-label"><span>03</span> Kontakt</div>
+                <h2 class="section-title">Dođite<br><span class="neon">u Loznicu</span></h2>
+                <div class="contact-grid">
+                    <a class="contact-card" href="https://maps.app.goo.gl/Ezyud4bgmUxcBked8" target="_blank" rel="noopener">
+                        <i class="fas fa-map-marker-alt"></i>
+                        <div><span>Lokacija</span><strong>Žikice Jovanovića 2</strong></div>
+                    </a>
+                    <div class="contact-card">
+                        <i class="fas fa-phone"></i>
+                        <div>
+                            <span>Telefon</span>
+                            <a href="tel:015873210"><strong>015 873 210</strong></a>
+                            <a href="tel:0631756615"><strong>063 175 6615</strong></a>
+                        </div>
+                    </div>
+                    <a class="contact-card" href="https://www.instagram.com/bdmobill?utm_source=ig_web_button_share_sheet&igsh=ZDNlZDc0MzIxNw==" target="_blank" rel="noopener">
+                        <i class="fab fa-instagram"></i>
+                        <div><span>Instagram</span><strong>@bdmobil</strong></div>
+                    </a>
+                    <a class="contact-card" href="https://www.facebook.com/bdmobill/" target="_blank" rel="noopener">
+                        <i class="fab fa-facebook"></i>
+                        <div><span>Facebook</span><strong>B &amp; D Mobile</strong></div>
+                    </a>
+                </div>
+                <div class="map-wrap">
+                    <iframe src="https://maps.google.com/maps?q=44.530311,19.223515&hl=sr&z=17&output=embed" width="100%" height="280" style="border:0;" loading="lazy" title="Lokacija"></iframe>
+                </div>
+                <footer class="site-footer">
+                    <img src="logo.jpg" alt="Logo">
+                    <p>&copy; 2026 B &amp; D Mobile</p>
+                </footer>
+            </div>
+        </section>
+
+    </main>
 
     <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/gsap.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/ScrollTrigger.min.js"></script>
