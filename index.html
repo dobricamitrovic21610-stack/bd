@@ -18,6 +18,11 @@
 
     <canvas id="canvas-3d" aria-hidden="true"></canvas>
 
+    <!-- Skriveni mirror — samo za texture ekrana, nije vidljiv na sajtu -->
+    <div id="phone-capture" aria-hidden="true">
+        <div id="phone-capture-viewport"><div id="phone-capture-content"></div></div>
+    </div>
+
     <nav class="nav" id="nav">
         <div class="nav-pill">
             <a href="#hero" class="nav-brand">
@@ -162,6 +167,7 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/ScrollTrigger.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/ScrollToPlugin.min.js"></script>
     <script src="https://unpkg.com/lenis@1.1.13/dist/lenis.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
     <script type="importmap">
     { "imports": {
         "three": "https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js",

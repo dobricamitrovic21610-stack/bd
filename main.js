@@ -1,6 +1,5 @@
 import * as THREE from 'three';
 import { RoundedBoxGeometry } from 'three/addons/geometries/RoundedBoxGeometry.js';
-import { CSS3DRenderer, CSS3DObject } from 'three/addons/renderers/CSS3DRenderer.js';
 
 gsap.registerPlugin(ScrollTrigger, ScrollToPlugin);
 
@@ -27,17 +26,9 @@ renderer.setSize(innerWidth, innerHeight);
 renderer.setPixelRatio(Math.min(devicePixelRatio, lowPower ? 1 : 1.15));
 renderer.setClearColor(0x000000, 0);
 renderer.toneMapping = THREE.ACESFilmicToneMapping;
-renderer.toneMappingExposure = 1.25;
+renderer.toneMappingExposure = 1.3;
 
-let cssRenderer = null;
-if (!lowPower) {
-    cssRenderer = new CSS3DRenderer();
-    cssRenderer.setSize(innerWidth, innerHeight);
-    cssRenderer.domElement.style.cssText = 'position:fixed;inset:0;pointer-events:none;z-index:1';
-    document.body.appendChild(cssRenderer.domElement);
-}
-
-scene.add(new THREE.HemisphereLight(0xaabbff, 0x080a14, 0.5));
+scene.add(new THREE.HemisphereLight(0xb0c0ff, 0x060810, 0.55));
 const key = new THREE.DirectionalLight(0xffffff, 1.8);
 key.position.set(3, 7, 7);
 scene.add(key);
@@ -103,91 +94,107 @@ const particles = new THREE.Points(
 );
 scene.add(particles);
 
-// ─── iPhone 17 Pro model ────────────────────────────────────────────
-const titanium = new THREE.MeshStandardMaterial({ color: 0x8e8983, metalness: 0.97, roughness: 0.12 });
-const titaniumDark = new THREE.MeshStandardMaterial({ color: 0x5c5854, metalness: 0.95, roughness: 0.18 });
-const btnMat = new THREE.MeshStandardMaterial({ color: 0x6a6660, metalness: 0.9, roughness: 0.2 });
-const lensMat = new THREE.MeshStandardMaterial({ color: 0x080a10, metalness: 0.95, roughness: 0.04 });
-const SW = 280, SH = 606;
+// ─── iPhone 17 Pro — Natural Titanium ───────────────────────────────
+const titanium = new THREE.MeshStandardMaterial({ color: 0xa9a49c, metalness: 0.98, roughness: 0.1 });
+const titaniumEdge = new THREE.MeshStandardMaterial({ color: 0xc8c2ba, metalness: 0.99, roughness: 0.06 });
+const titaniumDark = new THREE.MeshStandardMaterial({ color: 0x6e6a64, metalness: 0.96, roughness: 0.14 });
+const btnMat = new THREE.MeshStandardMaterial({ color: 0x7a756e, metalness: 0.92, roughness: 0.18 });
+const lensMat = new THREE.MeshStandardMaterial({ color: 0x050608, metalness: 0.97, roughness: 0.03 });
+const blackBezel = new THREE.MeshStandardMaterial({ color: 0x020203, metalness: 0.3, roughness: 0.5 });
+
+const screenCanvas = document.createElement('canvas');
+screenCanvas.width = 520;
+screenCanvas.height = 1120;
+const screenTex = new THREE.CanvasTexture(screenCanvas);
+screenTex.colorSpace = THREE.SRGBColorSpace;
+screenTex.minFilter = THREE.LinearFilter;
+screenCanvas.getContext('2d').fillStyle = '#0b0d18';
+screenCanvas.getContext('2d').fillRect(0, 0, screenCanvas.width, screenCanvas.height);
 
 function makeIPhone17Pro() {
     const g = new THREE.Group();
-    const W = 0.76, H = 1.58, D = 0.082, R = 0.058;
+    const W = 0.73, H = 1.57, D = 0.076, R = 0.042;
 
-    // Titanium body — ravne ivice
-    g.add(new THREE.Mesh(new RoundedBoxGeometry(W, H, D, 4, R), titanium));
+    g.add(new THREE.Mesh(new RoundedBoxGeometry(W, H, D, 3, R), titanium));
 
-    // Action button (desno)
-    const action = new THREE.Mesh(new RoundedBoxGeometry(0.007, 0.055, 0.03, 1, 0.003), btnMat);
-    action.position.set(W / 2 + 0.001, 0.28, 0);
+    const edgeFront = new THREE.Mesh(new RoundedBoxGeometry(W + 0.002, H + 0.002, D - 0.01, 2, R), titaniumEdge);
+    edgeFront.position.z = 0.002;
+    g.add(edgeFront);
+
+    const action = new THREE.Mesh(new RoundedBoxGeometry(0.006, 0.048, 0.028, 1, 0.002), btnMat);
+    action.position.set(W / 2 + 0.001, 0.32, 0);
     g.add(action);
 
-    // Power + volume (levo)
-    const pwr = new THREE.Mesh(new RoundedBoxGeometry(0.007, 0.09, 0.028, 1, 0.003), btnMat);
-    pwr.position.set(-W / 2 - 0.001, 0.2, 0);
+    const pwr = new THREE.Mesh(new RoundedBoxGeometry(0.006, 0.085, 0.026, 1, 0.002), btnMat);
+    pwr.position.set(-W / 2 - 0.001, 0.18, 0);
     g.add(pwr);
-    [0.05, -0.08].forEach((y) => {
-        const v = new THREE.Mesh(new RoundedBoxGeometry(0.007, 0.055, 0.028, 1, 0.003), btnMat);
+    [0.04, -0.1].forEach((y) => {
+        const v = new THREE.Mesh(new RoundedBoxGeometry(0.006, 0.05, 0.026, 1, 0.002), btnMat);
         v.position.set(-W / 2 - 0.001, y, 0);
         g.add(v);
     });
 
-    // Camera plateau — iPhone 17 Pro veliki modul
+    const usbc = new THREE.Mesh(new RoundedBoxGeometry(0.1, 0.006, 0.018, 1, 0.002), new THREE.MeshStandardMaterial({ color: 0x1a1a1a, metalness: 0.8, roughness: 0.3 }));
+    usbc.position.set(0, -H / 2 + 0.02, D / 2 - 0.01);
+    g.add(usbc);
+
     const camGrp = new THREE.Group();
-    camGrp.position.set(-0.14, H / 2 - 0.2, -D / 2 - 0.006);
-    const plateau = new THREE.Mesh(new RoundedBoxGeometry(0.42, 0.42, 0.022, 3, 0.06), titaniumDark);
-    camGrp.add(plateau);
-    const plateauGlass = new THREE.Mesh(
-        new RoundedBoxGeometry(0.38, 0.38, 0.004, 2, 0.05),
-        new THREE.MeshStandardMaterial({ color: 0x1a1a1e, metalness: 0.6, roughness: 0.3 })
-    );
-    plateauGlass.position.z = -0.012;
-    camGrp.add(plateauGlass);
-    // 3 sočiva + LiDAR
-    [[-0.1, 0.1], [0.1, 0.1], [0, -0.1]].forEach(([x, y], i) => {
-        const r = i === 2 ? 0.052 : 0.048;
-        const lens = new THREE.Mesh(new THREE.CylinderGeometry(r, r * 0.95, 0.014, 20), lensMat);
+    camGrp.position.set(0, H / 2 - 0.17, -D / 2 - 0.005);
+    camGrp.add(new THREE.Mesh(new RoundedBoxGeometry(0.5, 0.24, 0.024, 3, 0.05), titaniumDark));
+    const plateauRim = new THREE.Mesh(new RoundedBoxGeometry(0.48, 0.22, 0.006, 2, 0.04), new THREE.MeshStandardMaterial({ color: 0x222226, metalness: 0.7, roughness: 0.25 }));
+    plateauRim.position.z = -0.014;
+    camGrp.add(plateauRim);
+
+    [
+        { x: -0.13, y: 0.04, r: 0.05, peri: false },
+        { x: 0.13, y: 0.04, r: 0.05, peri: false },
+        { x: 0, y: -0.05, r: 0.058, peri: true },
+    ].forEach(({ x, y, r, peri }) => {
+        const lens = new THREE.Mesh(new THREE.CylinderGeometry(r, r * 0.92, peri ? 0.018 : 0.015, 24), lensMat);
         lens.rotation.x = Math.PI / 2;
-        lens.position.set(x, y, -0.018);
+        lens.position.set(x, y, -0.02);
         camGrp.add(lens);
-        const ring = new THREE.Mesh(new THREE.TorusGeometry(r * 0.85, 0.003, 8, 24), titanium);
+        const ring = new THREE.Mesh(new THREE.TorusGeometry(r * 0.82, 0.003, 8, 28), titanium);
         ring.rotation.x = Math.PI / 2;
-        ring.position.set(x, y, -0.02);
+        ring.position.set(x, y, -0.022);
         camGrp.add(ring);
     });
-    // Flash
-    const flash = new THREE.Mesh(new THREE.CylinderGeometry(0.018, 0.018, 0.008, 12), new THREE.MeshStandardMaterial({ color: 0xffffee, emissive: 0x332211, emissiveIntensity: 0.3 }));
+    const lidar = new THREE.Mesh(new THREE.CylinderGeometry(0.022, 0.022, 0.008, 12), new THREE.MeshStandardMaterial({ color: 0x111111, metalness: 0.8, roughness: 0.2 }));
+    lidar.rotation.x = Math.PI / 2;
+    lidar.position.set(0.17, -0.06, -0.017);
+    camGrp.add(lidar);
+    const flash = new THREE.Mesh(new THREE.CylinderGeometry(0.016, 0.016, 0.007, 12), new THREE.MeshStandardMaterial({ color: 0xfffff0, emissive: 0x443322, emissiveIntensity: 0.4 }));
     flash.rotation.x = Math.PI / 2;
-    flash.position.set(0.14, 0.12, -0.016);
+    flash.position.set(-0.17, -0.06, -0.017);
     camGrp.add(flash);
     g.add(camGrp);
 
-    // Bezel — ultra tanki
-    const bezel = new THREE.Mesh(
-        new RoundedBoxGeometry(W - 0.018, H - 0.018, D - 0.012, 3, 0.048),
-        new THREE.MeshStandardMaterial({ color: 0x050506, metalness: 0.5, roughness: 0.4 })
-    );
+    const screenW = W - 0.048, screenH = H - 0.078;
+    g.userData.screenW = screenW;
+
+    const bezel = new THREE.Mesh(new RoundedBoxGeometry(W - 0.012, H - 0.012, D - 0.01, 3, 0.038), blackBezel);
     bezel.position.z = 0.003;
     g.add(bezel);
 
-    const screenW = W - 0.055, screenH = H - 0.09;
-    g.userData.screenW = screenW;
-    g.userData.screenH = screenH;
-
-    // Dynamic Island — širi pill
-    const island = new THREE.Mesh(
-        new RoundedBoxGeometry(0.22, 0.034, 0.005, 2, 0.012),
-        new THREE.MeshStandardMaterial({ color: 0x000000, metalness: 0.7, roughness: 0.15 })
+    const screen = new THREE.Mesh(
+        new RoundedBoxGeometry(screenW, screenH, 0.003, 4, 0.014),
+        new THREE.MeshBasicMaterial({ map: screenTex })
     );
-    island.position.set(0, H / 2 - 0.085, D / 2 + 0.001);
+    screen.position.z = D / 2 - 0.002;
+    g.add(screen);
+
+    const island = new THREE.Mesh(
+        new RoundedBoxGeometry(0.24, 0.03, 0.004, 2, 0.01),
+        new THREE.MeshStandardMaterial({ color: 0x000000, metalness: 0.8, roughness: 0.1 })
+    );
+    island.position.set(0, H / 2 - 0.072, D / 2 + 0.001);
     g.add(island);
 
-    // Staklo — bez MeshPhysical (perf)
     const glass = new THREE.Mesh(
-        new RoundedBoxGeometry(W - 0.05, H - 0.085, 0.001, 2, 0.01),
-        new THREE.MeshBasicMaterial({ color: 0xffffff, transparent: true, opacity: 0.04 })
+        new RoundedBoxGeometry(W - 0.02, H - 0.02, 0.001, 2, 0.035),
+        new THREE.MeshBasicMaterial({ color: 0xffffff, transparent: true, opacity: 0.05 })
     );
-    glass.position.z = D / 2 + 0.003;
+    glass.position.z = D / 2 + 0.002;
     g.add(glass);
 
     return g;
@@ -199,41 +206,54 @@ scene.add(world);
 const mainPhone = makeIPhone17Pro();
 world.add(mainPhone);
 
-// Live sajt na ekranu (CSS3D samo desktop)
-let screenInner = null;
-let cssScreen = null;
+// Skriveni mirror → texture SAMO na ekranu telefona (bez duplog prikaza)
+const captureViewport = document.getElementById('phone-capture-viewport');
+const captureContent = document.getElementById('phone-capture-content');
+let capturing = false;
+let captureTimer = null;
+let lastCapY = -1;
 
-if (cssRenderer) {
-    const screenEl = document.createElement('div');
-    screenEl.className = 'phone-screen-live';
-    screenInner = document.createElement('div');
-    screenInner.className = 'phone-screen-inner';
-    screenEl.appendChild(screenInner);
-
+function buildCaptureMirror() {
     const src = document.querySelector('.scroll-container');
-    if (src) {
-        const clone = src.cloneNode(true);
-        clone.querySelectorAll('[id]').forEach((el) => el.removeAttribute('id'));
-        clone.querySelectorAll('iframe').forEach((f) => f.remove());
-        clone.style.width = `${SW}px`;
-        clone.querySelectorAll('.section').forEach((s) => { s.style.minHeight = 'auto'; });
-        screenInner.appendChild(clone);
-    }
-
-    cssScreen = new CSS3DObject(screenEl);
-    const scale = mainPhone.userData.screenW / SW;
-    cssScreen.scale.set(scale, scale, 1);
-    cssScreen.position.z = 0.041;
-    mainPhone.add(cssScreen);
-} else {
-    // Mobile fallback — emissive ekran
-    const fb = new THREE.Mesh(
-        new RoundedBoxGeometry(0.7, 1.48, 0.003, 2, 0.01),
-        new THREE.MeshStandardMaterial({ color: 0x0a1020, emissive: 0x334488, emissiveIntensity: 0.7, metalness: 0.1, roughness: 0.2 })
-    );
-    fb.position.z = 0.04;
-    mainPhone.add(fb);
+    if (!src || !captureContent) return;
+    const clone = src.cloneNode(true);
+    clone.querySelectorAll('[id]').forEach((el) => el.removeAttribute('id'));
+    clone.querySelectorAll('iframe').forEach((f) => f.remove());
+    clone.style.width = '260px';
+    clone.querySelectorAll('.section').forEach((s) => { s.style.minHeight = 'auto'; });
+    captureContent.innerHTML = '';
+    captureContent.appendChild(clone);
 }
+
+async function updateScreenTexture() {
+    if (capturing || !captureViewport || typeof html2canvas === 'undefined') return;
+    const sy = Math.round(lenis.scroll);
+    if (Math.abs(sy - lastCapY) < 15 && lastCapY >= 0) return;
+
+    capturing = true;
+    captureContent.style.transform = `translateY(${-sy * 0.46}px)`;
+
+    try {
+        const shot = await html2canvas(captureViewport, {
+            width: 260, height: 562, scale: lowPower ? 1 : 1.5,
+            backgroundColor: '#0b0d18', logging: false, useCORS: true,
+        });
+        const ctx = screenCanvas.getContext('2d');
+        ctx.drawImage(shot, 0, 0, screenCanvas.width, screenCanvas.height);
+        screenTex.needsUpdate = true;
+        lastCapY = sy;
+    } catch (_) { /* skip */ }
+    capturing = false;
+}
+
+function scheduleCapture() {
+    clearTimeout(captureTimer);
+    captureTimer = setTimeout(updateScreenTexture, lowPower ? 200 : 120);
+}
+
+buildCaptureMirror();
+window.addEventListener('load', () => setTimeout(updateScreenTexture, 500));
+lenis.on('scroll', scheduleCapture);
 
 // 1 satelit umesto 3
 if (!lowPower) {
@@ -262,9 +282,8 @@ const camPath = new THREE.CatmullRomCurve3([
 ]);
 
 const scroll = { p: 0, hero: 0 };
-let lastScreenY = -1;
 
-// ─── Animacija (throttle render) ────────────────────────────────────
+// ─── Animacija ──────────────────────────────────────────────────────
 const mouse = { x: 0, y: 0, tx: 0, ty: 0 };
 addEventListener('mousemove', (e) => {
     mouse.tx = (e.clientX / innerWidth - 0.5) * 2;
@@ -274,16 +293,6 @@ document.addEventListener('visibilitychange', () => { visible = !document.hidden
 
 const clock = new THREE.Clock();
 let tick = 0;
-
-function syncPhoneScreen() {
-    if (!screenInner) return;
-    const sy = Math.round(lenis.scroll);
-    if (sy === lastScreenY) return;
-    lastScreenY = sy;
-    screenInner.style.transform = `translateY(${-sy * 0.46}px)`;
-}
-
-lenis.on('scroll', syncPhoneScreen);
 
 function animate() {
     requestAnimationFrame(animate);
@@ -336,7 +345,6 @@ function animate() {
     if (lowPower && tick % 2 !== 0) return;
 
     renderer.render(scene, camera);
-    if (cssRenderer) cssRenderer.render(scene, camera);
 }
 animate();
 
@@ -344,7 +352,8 @@ addEventListener('resize', () => {
     camera.aspect = innerWidth / innerHeight;
     camera.updateProjectionMatrix();
     renderer.setSize(innerWidth, innerHeight);
-    cssRenderer?.setSize(innerWidth, innerHeight);
+    lastCapY = -1;
+    scheduleCapture();
 }, { passive: true });
 
 // ─── Split text ─────────────────────────────────────────────────────

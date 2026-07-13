@@ -42,20 +42,20 @@ body{
     position:fixed;inset:0;z-index:1;pointer-events:none;
 }
 
-/* Live sajt na 3D ekranu telefona */
-.phone-screen-live{
-    width:280px;height:606px;overflow:hidden;border-radius:32px;
-    background:var(--bg);pointer-events:none;
-    box-shadow:inset 0 0 0 1px rgba(255,255,255,0.06);
+/* Skriveni capture — nikad se ne vidi na stranici */
+#phone-capture{
+    position:fixed;left:-9999px;top:0;width:0;height:0;
+    overflow:hidden;opacity:0;pointer-events:none;visibility:hidden;
 }
-.phone-screen-inner{width:280px;will-change:transform}
-.phone-screen-inner .section{min-height:auto;padding:28px 16px}
-.phone-screen-inner .hero-title{font-size:1.4rem}
-.phone-screen-inner .display-title{font-size:1.15rem}
-.phone-screen-inner .service-img{height:70px}
-.phone-screen-inner .services-grid{grid-template-columns:1fr 1fr;gap:8px}
-.phone-screen-inner .glass-panel{padding:16px!important;border-radius:14px!important}
-.phone-screen-inner .scroll-indicator{display:none}
+#phone-capture-viewport{width:260px;height:562px;overflow:hidden;background:var(--bg)}
+#phone-capture-content{width:260px;transform-origin:top left}
+#phone-capture-content .section{min-height:auto;padding:20px 14px}
+#phone-capture-content .hero-title{font-size:1.2rem}
+#phone-capture-content .display-title{font-size:1rem}
+#phone-capture-content .service-img{height:56px}
+#phone-capture-content .services-grid{grid-template-columns:1fr;gap:6px}
+#phone-capture-content .glass-panel{padding:12px!important;border-radius:12px!important}
+#phone-capture-content .scroll-indicator,#phone-capture-content iframe{display:none!important}
 
 /* Liquid glass paneli */
 .glass-panel{
